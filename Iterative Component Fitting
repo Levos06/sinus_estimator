@@ -1,0 +1,20 @@
+AA, ff, pphi = [], [], []
+residual = y.copy()
+
+for n in range(10):
+    A, f, phi = 1, 1, 1
+    lr = 0.001
+    for i in range(100):
+        dEdf = np.sum(2 * (A * np.sin(f * x + phi) - residual) * A * x * np.cos(f * x + phi))
+        dEdA = np.sum(2 * (A * np.sin(f * x + phi) - residual) * np.sin(f * x + phi))
+        dEdphi = np.sum(2 * (A * np.sin(f * x + phi) - residual) * A * np.cos(f * x + phi))
+
+        f -= lr * dEdf
+        A -= lr * dEdA
+        phi -= lr * dEdphi
+
+    component = sinus(x, f, A, phi)
+    residual -= component
+    AA.append(A); ff.append(f); pphi.append(phi)
+    plt.plot(x, residual)
+    plt.show()
