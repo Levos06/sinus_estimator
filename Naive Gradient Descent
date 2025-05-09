@@ -1,0 +1,27 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def sinus(t, f, A, phi):
+    return A * np.sin(f * t + phi)
+
+x = np.linspace(0, 15, 1000)
+y = sinus(x, 5, 2, 0.3) + sinus(x, 8, 1.6, 1) + sinus(x, 15, 0.2, 0)
+
+A = 1
+f = 1
+phi = 1
+lr = 0.001
+
+for i in range(100):
+    loss = sum((A * np.sin(f * x + phi) - y) ** 2)
+    dEdf = sum(2 * (A * np.sin(f * x + phi) - y) * A * x * np.cos(f * x + phi))
+    dEdA = sum(2 * (A * np.sin(f * x + phi) - y) * np.sin(f * x + phi))
+    dEdphi = sum(2 * (A * np.sin(f * x + phi) - y) * A * np.cos(f * x + phi))
+
+    f -= lr * dEdf
+    A -= lr * dEdA
+    phi -= lr * dEdphi
+
+plt.plot(x, y)
+plt.plot(x, A * np.sin(f * x + phi))
+plt.show()
