@@ -1,0 +1,45 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def sinus(t, f, A, phi):
+    return A * np.sin(f * t + phi)
+
+x = np.linspace(0, 15, 1000)
+y = sinus(x, 5, 2, 0.3) + sinus(x, 8, 1.6, 1) + sinus(x, 15, 0.2, 0)
+
+AA, ff, pphi = [], [], []
+residual = y.copy()
+
+for n in range(10):
+    A = 1
+    f = 1
+    phi = 1
+    lr = 0.001
+    min_loss = float("inf")
+    best_A, best_f, best_phi = A, f, phi
+
+    for i in range(100):
+        pred = sinus(x, f, A, phi)
+        loss = np.sum((pred - residual) ** 2)
+
+        if loss < min_loss:
+            min_loss = loss
+            best_A, best_f, best_phi = A, f, phi
+
+        dEdf = np.sum(2 * (pred - residual) * A * x * np.cos(f * x + phi))
+        dEdA = np.sum(2 * (pred - residual) * np.sin(f * x + phi))
+        dEdphi = np.sum(2 * (pred - residual) * A * np.cos(f * x + phi))
+
+        f -= lr * dEdf
+        A -= lr * dEdA
+        phi -= lr * dEdphi
+
+    component = sinus(x, best_f, best_A, best_phi)
+    residual -= component
+    AA.append(best_A)
+    ff.append(best_f)
+    pphi.append(best_phi)
+
+    plt.plot(x, component, label=f"Component {n+1}")
+    plt.legend()
+    plt.show()
