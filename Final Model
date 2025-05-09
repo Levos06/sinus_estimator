@@ -1,0 +1,78 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def sinusoid(t, frequency, amplitude, phase):
+    return amplitude * np.sin(frequency * t + phase)
+
+# Исходный сигнал: сумма трёх синусоид + шум
+time = np.linspace(0, 15, 1000)
+signal = (
+    sinusoid(time, 5, 2, 0.3) +
+    sinusoid(time, 8, 1.6, 1.0) +
+    sinusoid(time, 15, 0.2, 0.0)
+) + np.random.normal(0, 0.1, len(time))
+
+residual = signal.copy()
+
+amplitudes = []
+frequencies = []
+phases = []
+
+for i in range(10):
+    candidates = []
+    freq_range = np.linspace(3, 17, 300)
+
+    for freq in freq_range:
+        sin_component = np.sin(freq * time)
+        cos_component = np.cos(freq * time)
+
+        a = np.dot(residual, sin_component)
+        b = np.dot(residual, cos_component)
+
+        amplitude = np.sqrt(a**2 + b**2) / len(time)
+        phase = np.arctan2(b, a)
+
+        approximation = sinusoid(time, freq, amplitude, phase)
+        error = np.sum((residual - approximation) ** 2)
+
+        candidates.append((error, freq, amplitude, phase))
+
+    error_best, freq_best, amp_best, phase_best = min(candidates, key=lambda t: t[0])
+
+    if amp_best < 0.0005:
+        break
+
+    frequencies.append(freq_best)
+    amplitudes.append(amp_best)
+    phases.append(phase_best)
+
+    component = sinusoid(time, freq_best, amp_best, phase_best)
+    residual -= component
+
+    print(f"Step {i+1}: error = {error_best:.4f}, freq = {freq_best:.2f}, amp = {amp_best:.3f}, phase = {phase_best:.2f}")
+    # Чтобы включить промежуточные графики, раскомментируй:
+    # plt.plot(time, residual, label="residual")
+    # plt.plot(time, component, label="fitted")
+    # plt.legend()
+    # plt.title(f"Component #{i+1}")
+    # plt.show()
+
+# Параметры найденных компонент
+print("\nRecovered components:")
+for i, (A, f, p) in enumerate(zip(amplitudes, frequencies, phases), 1):
+    print(f"{i:2d}) A = {A:.3f}, f = {f:.3f}, phase = {p:.3f}")
+
+# Восстановленный сигнал
+reconstructed = sum(sinusoid(time, f, A, p) for f, A, p in zip(frequencies, amplitudes, phases))
+
+# График: оригинал, восстановление и остаток
+plt.figure(figsize=(10, 6))
+plt.scatter(time, signal, label="Original Signal", s=10, c='red', alpha=0.5)
+plt.plot(time, reconstructed, label="Reconstructed", linestyle="--", linewidth=2)
+plt.plot(time, signal - reconstructed, label="Residual", linestyle=":", alpha=0.7)
+plt.legend()
+plt.title("Signal Decomposition")
+plt.xlabel("Time")
+plt.ylabel("Amplitude")
+plt.tight_layout()
+plt.show()
