@@ -1,0 +1,41 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def sinusoid(t, frequency, amplitude, phase):
+    return amplitude * np.sin(frequency * t + phase)
+
+x = np.linspace(0, 15, 1000)
+signal = (
+    sinusoid(x, 5, 2, 0.3) +
+    sinusoid(x, 8, 1.6, 1.0) +
+    sinusoid(x, 15, 0.2, 0.0)
+)
+
+residual = signal.copy()
+AA, ff, pp = [], [], []
+
+for i in range(10):
+    candidates = []
+    for freq in np.linspace(3, 17, 300):
+        sin_comp = np.sin(freq * x)
+        cos_comp = np.cos(freq * x)
+        a = np.dot(residual, sin_comp)
+        b = np.dot(residual, cos_comp)
+        amp = np.sqrt(a**2 + b**2) / len(x)
+        phase = np.arctan2(b, a)
+        component = sinusoid(x, freq, amp, phase)
+        error = np.sum((residual - component) ** 2)
+        candidates.append((error, freq, amp, phase))
+
+    err_best, f_best, A_best, phi_best = min(candidates, key=lambda t: t[0])
+
+    component = sinusoid(x, f_best, A_best, phi_best)
+    residual -= component
+
+    ff.append(f_best)
+    AA.append(A_best)
+    pp.append(phi_best)
+
+    plt.plot(x, component, label=f"Component {i+1}")
+    plt.legend()
+    plt.show()
